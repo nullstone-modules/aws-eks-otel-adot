@@ -1,0 +1,16 @@
+org_name: nullstone
+name: aws-eks-otel-adot
+friendly_name: EKS ADOT (OpenTelemetry add-on)
+description: Manages an OpenTelemetry collector on AWS EKS using the ADOT add-on.
+category: datastore
+subcategory: ""
+provider_types:
+    - aws
+platform: otel
+subplatform: eks
+type: ""
+appCategories: []
+is_public: true
+tool_name: opentofu
+include: []
+source_url: https://github.com/nullstone-modules/aws-eks-adot
