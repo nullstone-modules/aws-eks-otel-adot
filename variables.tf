@@ -34,9 +34,8 @@ variable "enable_aws_sinks" {
 When true (default), the collector exports to AWS-native backends: traces to X-Ray, metrics to
 Amazon Managed Prometheus (an AMP workspace is created by this module), and logs to CloudWatch Logs.
 
-When false, the collector sends telemetry ONLY to the connected `extender` (e.g. Langfuse): the AWS
-exporters, the AMP workspace, and the AWS IAM role/policies are all omitted. An `extender` connection
-is required in this mode.
+When false, the collector sends telemetry ONLY to the connected `extender` (e.g. external vendor): the AWS
+exporters, the AMP workspace, and the AWS IAM role/policies are all omitted. An `extender` connection is required in this mode.
 EOF
 }
 
