@@ -64,21 +64,26 @@ locals {
   )
 
   // ---- exporters (only when AWS sinks are enabled) ----
-  aws_exporters = var.enable_aws_sinks ? merge(
-    {
-      awsxray = { region = local.aws_region }
+  // Each exporter is gated as its own single-key conditional so the true/false branches share a
+  // consistent type (map of one object). A single ternary over the whole heterogeneous object fails
+  // because the populated object can't unify with the empty `{}` false branch.
+  aws_exporters = merge(
+    var.enable_aws_sinks ? { awsxray = { region = local.aws_region } } : {},
+    var.enable_aws_sinks ? {
       awscloudwatchlogs = {
         region          = local.aws_region
         log_group_name  = "/aws/eks/otel/${local.resource_name}"
         log_stream_name = "otel-collector"
       }
+    } : {},
+    var.enable_aws_sinks ? {
       prometheusremotewrite = {
         endpoint = local.amp_remote_write_endpoint
         auth     = { authenticator = "sigv4auth" }
       }
-    },
-    var.enable_cloudwatch_metrics ? { awsemf = { region = local.aws_region, namespace = local.block_name } } : {},
-  ) : {}
+    } : {},
+    var.enable_aws_sinks && var.enable_cloudwatch_metrics ? { awsemf = { region = local.aws_region, namespace = local.block_name } } : {},
+  )
 
   // ---- pipelines (only when AWS sinks are enabled) ----
   metrics_exporters = concat(["prometheusremotewrite"], var.enable_cloudwatch_metrics ? ["awsemf"] : [])
