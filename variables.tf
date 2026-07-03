@@ -12,13 +12,13 @@ EOF
 
 variable "operator_chart_version" {
   type        = string
-  default     = "0.90.4"
+  default     = "0.118.0"
   description = "The version of the opentelemetry-operator Helm chart (https://open-telemetry.github.io/opentelemetry-helm-charts) to install."
 }
 
 variable "collector_image" {
   type        = string
-  default     = "public.ecr.aws/aws-observability/aws-otel-collector:v0.43.3"
+  default     = "public.ecr.aws/aws-observability/aws-otel-collector:v0.48.0"
   description = <<EOF
 The container image for the collector. It must be a distribution that includes the AWS exporters
 (awsxray, awsemf, awscloudwatchlogs) and prometheusremotewrite + sigv4auth — e.g. the ADOT collector
