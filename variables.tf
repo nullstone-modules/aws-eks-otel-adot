@@ -53,13 +53,13 @@ variable "cpu" {
 
 variable "memory" {
   type        = string
-  default     = "128Mi"
+  default     = "256Mi"
   description = "The amount of memory to request for each collector."
 }
 
 variable "memory_limit" {
   type        = string
-  default     = "256Mi"
+  default     = "512Mi"
   description = "The maximum amount of memory each collector can use."
 }
 

@@ -32,7 +32,7 @@ AMP workspace, and the AWS IAM are all omitted. An `extender` connection is requ
 
 ## Tuning
 
-- `memory` / `memory_limit` (defaults 128Mi / 256Mi): the memory_limiter refuses intake above 65% of
+- `memory` / `memory_limit` (defaults 256Mi / 512Mi): the memory_limiter refuses intake above 55% of
   the limit. Raise these when `otelcol_receiver_refused_*` grows.
 - `batch_size` / `batch_max_size` (defaults 1000 / 2000): items per export batch.
 - `min_replicas` / `max_replicas`: the OTLP receiver is stateless, so replicas scale horizontally.

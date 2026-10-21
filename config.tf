@@ -21,8 +21,8 @@ locals {
   base_processors = {
     memory_limiter = {
       check_interval         = "1s"
-      limit_percentage       = 65
-      spike_limit_percentage = 20
+      limit_percentage       = 80
+      spike_limit_percentage = 25
     }
     batch = {
       send_batch_size     = var.batch_size
