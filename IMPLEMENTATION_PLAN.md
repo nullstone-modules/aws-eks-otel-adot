@@ -72,3 +72,22 @@ attach only when AWS sinks are enabled. A `ClusterRole`/`ClusterRoleBinding` gra
 - Extender connected → its pipeline appears in the merged `spec.config`; wrong namespace → precondition
   fails. `install_operator = false` second instance applies without conflict. `enable_aws_sinks = false`
   + extender → no AMP/AWS exporters, telemetry only to the extender.
+
+## 8. Infra metrics agent (SER-81) — `agent.tf`, `agent-config.tf`
+
+Opt-in (`enable_infra_metrics`). A second `OpenTelemetryCollector` in `daemonset` mode scrapes each
+node's kubelet with `kubeletstats` (by host IP: node names are not DNS-resolvable on EKS Auto Mode).
+
+- **Extender only.** Pipelines are the extender fragments' `metrics*` pipelines with the receiver
+  swapped to `kubeletstats`; the fragments' exporters/processors/extensions are merged in. The AWS
+  sinks are never referenced, so this cannot recreate the CloudWatch per-metric bill. Precondition:
+  an extender is connected.
+- **Enrichment in the agent.** Node-scoped `k8sattributes` associating by `k8s.pod.uid` (no
+  `from: connection` rule, so node metrics are not mis-tagged), `resource/infra` adds
+  `k8s.cluster.name` + `deployment.environment`, `filter/namespaces` keeps pod/container metrics for
+  `infra_namespaces` (default: the connected cluster-namespace).
+- **Shared image, SA, RBAC.** `collector_image` defaults to the contrib distribution (ADOT lacks
+  `kubeletstats`). The agent reuses the gateway's service account (no AWS IAM needed) and the
+  ClusterRole gains `nodes/stats` + `nodes/proxy` get. Extender credentials
+  (`collector-env-from`, rotation annotation) are loaded the same way as on the gateway.
+- **Fargate unsupported** (precondition on `use_irsa`).

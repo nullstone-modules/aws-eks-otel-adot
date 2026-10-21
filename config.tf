@@ -17,6 +17,20 @@ locals {
     }
   }
 
+  // Pod metadata attached by k8sattributes in both collectors.
+  k8sattributes_metadata = [
+    "k8s.namespace.name",
+    "k8s.deployment.name",
+    "k8s.statefulset.name",
+    "k8s.daemonset.name",
+    "k8s.cronjob.name",
+    "k8s.job.name",
+    "k8s.replicaset.name",
+    "k8s.node.name",
+    "k8s.pod.name",
+    "k8s.pod.uid",
+    "k8s.pod.start_time",
+  ]
   // ---- processors (always present) ----
   base_processors = {
     memory_limiter = {
@@ -31,21 +45,7 @@ locals {
     }
     k8sattributes = {
       passthrough = false
-      extract = {
-        metadata = [
-          "k8s.namespace.name",
-          "k8s.deployment.name",
-          "k8s.statefulset.name",
-          "k8s.daemonset.name",
-          "k8s.cronjob.name",
-          "k8s.job.name",
-          "k8s.replicaset.name",
-          "k8s.node.name",
-          "k8s.pod.name",
-          "k8s.pod.uid",
-          "k8s.pod.start_time",
-        ]
-      }
+      extract     = { metadata = local.k8sattributes_metadata }
       pod_association = [
         { sources = [{ from = "resource_attribute", name = "k8s.pod.ip" }] },
         { sources = [{ from = "resource_attribute", name = "k8s.pod.uid" }] },

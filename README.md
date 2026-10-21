@@ -41,5 +41,20 @@ AMP workspace, and the AWS IAM are all omitted. An `extender` connection is requ
 
 - The operator is cluster-scoped (one per cluster). When multiple otel collector datastores target
   the same cluster, set `install_operator = false` on the additional instances.
-- `collector_image` must be a distribution that includes the AWS exporters (the ADOT collector or
-  `opentelemetry-collector-contrib`); the core upstream image does not.
+- `collector_image` is shared by the gateway and the infra metrics agent. It must include the AWS
+  exporters and the `kubeletstats` receiver; the contrib distribution (default) does, the ADOT image
+  lacks `kubeletstats`, and the core image lacks the AWS exporters.
+
+## Infra metrics (optional)
+
+Set `enable_infra_metrics = true` to run an agent on every node (a second `OpenTelemetryCollector`,
+`mode: daemonset`) that scrapes the kubelet with `kubeletstats` for node, pod, and container CPU/memory.
+
+- Exported **only to the connected `extender`** (its `metrics*` pipelines, fed by `kubeletstats`
+  instead of `otlp`). Never to AMP or CloudWatch. An extender connection is required.
+- Pod/container metrics are kept for `infra_namespaces` only (default: the connected
+  cluster-namespace). Node metrics are always kept.
+- Metrics carry `k8s.deployment.name` etc. via a node-scoped `k8sattributes`, plus
+  `k8s.cluster.name` and `deployment.environment`.
+- Sizing: `agent_cpu`, `agent_memory`, `agent_memory_limit`, `agent_collection_interval`.
+- Not available on Fargate (no DaemonSets, no kubelet).

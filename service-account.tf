@@ -18,7 +18,7 @@ resource "kubernetes_service_account_v1" "collector" {
 }
 
 // The k8sattributes processor (present in the base config regardless of sinks) needs to read pod /
-// namespace / node / replicaset metadata cluster-wide.
+// namespace / node / replicaset metadata cluster-wide. The infra metrics agent also reads the kubelet.
 resource "kubernetes_cluster_role_v1" "collector" {
   metadata {
     name = local.resource_name
@@ -40,6 +40,13 @@ resource "kubernetes_cluster_role_v1" "collector" {
     api_groups = ["extensions"]
     resources  = ["replicasets"]
     verbs      = ["get", "list", "watch"]
+  }
+
+  // kubeletstats (infra metrics agent): /stats/summary and /pods on the kubelet.
+  rule {
+    api_groups = [""]
+    resources  = ["nodes/stats", "nodes/proxy"]
+    verbs      = ["get"]
   }
 }
 

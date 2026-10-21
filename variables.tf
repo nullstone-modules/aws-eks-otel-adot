@@ -18,12 +18,12 @@ variable "operator_chart_version" {
 
 variable "collector_image" {
   type        = string
-  default     = "public.ecr.aws/aws-observability/aws-otel-collector:v0.48.0"
+  default     = "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.163.1"
   description = <<EOF
-The container image for the collector. It must be a distribution that includes the AWS exporters
-(awsxray, awsemf, awscloudwatchlogs) and prometheusremotewrite + sigv4auth — e.g. the ADOT collector
-(aws-otel-collector) or opentelemetry-collector-contrib. The core upstream collector image does NOT
-include these and will fail to start with this config.
+The container image for both collectors: the OTLP gateway and, when enable_infra_metrics is true, the
+kubelet-scraping agent. It must include the AWS exporters (awsxray, awsemf, awscloudwatchlogs),
+prometheusremotewrite + sigv4auth, and the kubeletstats receiver. The contrib distribution has all of
+them; the ADOT image lacks kubeletstats and the core image lacks the AWS exporters.
 EOF
 }
 
@@ -90,4 +90,47 @@ variable "batch_max_size" {
     condition     = var.batch_max_size >= var.batch_size
     error_message = "batch_max_size must be >= batch_size."
   }
+}
+
+variable "enable_infra_metrics" {
+  type        = bool
+  default     = false
+  description = <<EOF
+When true, runs an agent on every node (DaemonSet) that scrapes the kubelet for node, pod, and
+container CPU/memory and exports it ONLY to the connected `extender`, never to the AWS sinks.
+Requires an `extender` connection. Not available on Fargate.
+EOF
+}
+
+variable "infra_namespaces" {
+  type        = list(string)
+  default     = []
+  description = <<EOF
+Namespaces whose pod and container infra metrics are kept; all others are dropped. Node metrics are
+always kept. Empty (default) means only the connected cluster-namespace.
+EOF
+}
+
+variable "agent_collection_interval" {
+  type        = string
+  default     = "60s"
+  description = "How often each infra metrics agent scrapes its kubelet."
+}
+
+variable "agent_cpu" {
+  type        = string
+  default     = "100m"
+  description = "The amount of CPU to request for each infra metrics agent."
+}
+
+variable "agent_memory" {
+  type        = string
+  default     = "128Mi"
+  description = "The amount of memory to request for each infra metrics agent."
+}
+
+variable "agent_memory_limit" {
+  type        = string
+  default     = "256Mi"
+  description = "The maximum amount of memory each infra metrics agent can use."
 }
