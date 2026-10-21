@@ -19,3 +19,12 @@ locals {
   // The namespace the extender created its resources in; used to validate it matches this collector.
   extender_namespace = try(data.ns_connection.extender.outputs["kubernetes_namespace"], null)
 }
+
+locals {
+  // Kubernetes envFrom entries (e.g. a Secret holding exporter credentials) the fragments reference
+  // as `${env:...}`; [] when absent.
+  extender_env_from = try(data.ns_connection.extender.outputs["collector-env-from"], [])
+
+  // Changes when the extender's credentials change; stamped on the pod so a rotation restarts it.
+  extender_env_version = try(data.ns_connection.extender.outputs["collector-env-version"], null)
+}

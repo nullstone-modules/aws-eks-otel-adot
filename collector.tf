@@ -19,6 +19,11 @@ locals {
     var.max_replicas > var.min_replicas ? {
       autoscaler = { minReplicas = var.min_replicas, maxReplicas = var.max_replicas }
     } : {},
+    // Load extender credentials into the pod env; the annotation rolls the pod when they rotate.
+    length(local.extender_env_from) > 0 ? { envFrom = local.extender_env_from } : {},
+    local.extender_env_version != null ? {
+      podAnnotations = { "nullstone.io/extender-env-version" = local.extender_env_version }
+    } : {},
   )
 }
 

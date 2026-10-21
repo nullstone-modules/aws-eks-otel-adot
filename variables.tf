@@ -74,3 +74,20 @@ variable "max_replicas" {
   default     = 1
   description = "The maximum number of collector replicas to run. Autoscaling is disabled when this equals min_replicas."
 }
+
+variable "batch_size" {
+  type        = number
+  default     = 1000
+  description = "Items (spans, metric points, log records) the batch processor accumulates before exporting (send_batch_size)."
+}
+
+variable "batch_max_size" {
+  type        = number
+  default     = 2000
+  description = "Upper bound on items per exported batch (send_batch_max_size). Must be >= batch_size."
+
+  validation {
+    condition     = var.batch_max_size >= var.batch_size
+    error_message = "batch_max_size must be >= batch_size."
+  }
+}

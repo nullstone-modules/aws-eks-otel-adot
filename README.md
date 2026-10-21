@@ -23,10 +23,19 @@ telemetry consumers stay provider-agnostic.
 
 Connect an `extender` (e.g. `k8s-otel-langfuse-extender`) to forward telemetry to another provider
 without forking this module. The extender's structured `collector-config-fragments` are deep-merged
-into the collector's `spec.config` in Terraform.
+into the collector's `spec.config` in Terraform. If the extender reports `collector-env-from` (a
+Secret holding exporter credentials referenced as `${env:...}`), it is loaded into the pod env and
+`collector-env-version` is stamped on the pod so a credential rotation restarts the collector.
 
 Set `enable_aws_sinks = false` to send telemetry **only** to the extender — the AWS exporters, the
 AMP workspace, and the AWS IAM are all omitted. An `extender` connection is required in that mode.
+
+## Tuning
+
+- `memory` / `memory_limit` (defaults 128Mi / 256Mi): the memory_limiter refuses intake above 65% of
+  the limit. Raise these when `otelcol_receiver_refused_*` grows.
+- `batch_size` / `batch_max_size` (defaults 1000 / 2000): items per export batch.
+- `min_replicas` / `max_replicas`: the OTLP receiver is stateless, so replicas scale horizontally.
 
 ## Notes
 

@@ -25,8 +25,8 @@ locals {
       spike_limit_percentage = 20
     }
     batch = {
-      send_batch_size     = 200
-      send_batch_max_size = 200
+      send_batch_size     = var.batch_size
+      send_batch_max_size = var.batch_max_size
       timeout             = "5s"
     }
     k8sattributes = {
