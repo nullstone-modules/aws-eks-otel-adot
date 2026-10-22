@@ -22,7 +22,8 @@ variable "collector_image" {
   description = <<EOF
 The container image for both collectors: the OTLP gateway and, when enable_infra_metrics is true, the
 kubelet-scraping agent. It must include the AWS exporters (awsxray, awsemf, awscloudwatchlogs),
-prometheusremotewrite + sigv4auth, and the kubeletstats receiver. The contrib distribution has all of
+prometheusremotewrite + sigv4auth, the kubeletstats receiver, and (when enable_cluster_metrics is true) the
+k8s_cluster receiver with the k8s_leader_elector extension. The contrib distribution has all of
 them; the ADOT image lacks kubeletstats and the core image lacks the AWS exporters.
 EOF
 }
@@ -133,4 +134,22 @@ variable "agent_memory_limit" {
   type        = string
   default     = "256Mi"
   description = "The maximum amount of memory each infra metrics agent can use."
+}
+
+variable "enable_cluster_metrics" {
+  type        = bool
+  default     = false
+  description = <<EOF
+When true, the OTLP gateway also runs the k8s_cluster receiver, which watches the Kubernetes API for
+cluster-level state (container restarts and readiness, pod phase, deployment available/desired,
+container CPU/memory limits, node conditions) and exports it ONLY to the connected `extender`, never
+to the AWS sinks. Runs on one gateway replica at a time via leader election. Requires an `extender`
+connection.
+EOF
+}
+
+variable "cluster_collection_interval" {
+  type        = string
+  default     = "60s"
+  description = "How often the k8s_cluster receiver emits cluster metrics."
 }

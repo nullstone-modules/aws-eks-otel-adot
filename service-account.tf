@@ -48,6 +48,56 @@ resource "kubernetes_cluster_role_v1" "collector" {
     resources  = ["nodes/stats", "nodes/proxy"]
     verbs      = ["get"]
   }
+
+  // k8s_cluster receiver (enable_cluster_metrics): watches cluster-level objects via the API server.
+  rule {
+    api_groups = [""]
+    resources = [
+      "events",
+      "namespaces",
+      "namespaces/status",
+      "nodes",
+      "nodes/spec",
+      "pods",
+      "pods/status",
+      "replicationcontrollers",
+      "replicationcontrollers/status",
+      "resourcequotas",
+      "services",
+    ]
+    verbs = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["daemonsets", "deployments", "replicasets", "statefulsets"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = ["extensions"]
+    resources  = ["daemonsets", "deployments", "replicasets"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = ["batch"]
+    resources  = ["jobs", "cronjobs"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = ["autoscaling"]
+    resources  = ["horizontalpodautoscalers"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  // k8s_leader_elector extension: one gateway replica holds the Lease and runs k8s_cluster.
+  rule {
+    api_groups = ["coordination.k8s.io"]
+    resources  = ["leases"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch"]
+  }
 }
 
 resource "kubernetes_cluster_role_binding_v1" "collector" {

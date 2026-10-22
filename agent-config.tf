@@ -7,22 +7,8 @@ locals {
   // Namespaces whose pod/container metrics are kept. Default: the connected cluster-namespace.
   infra_namespaces = coalescelist(var.infra_namespaces, [local.kubernetes_namespace])
 
-  agent_own_processors = {
-    memory_limiter = {
-      check_interval         = "1s"
-      limit_percentage       = 65
-      spike_limit_percentage = 20
-    }
-    // Node-scoped (watches only this node's pods). Associates by pod UID, which kubeletstats sets on
-    // every pod/container resource; node resources have none and are left untouched.
-    k8sattributes = {
-      passthrough = false
-      filter      = { node_from_env_var = "K8S_NODE_NAME" }
-      extract     = { metadata = local.k8sattributes_metadata }
-      pod_association = [
-        { sources = [{ from = "resource_attribute", name = "k8s.pod.uid" }] },
-      ]
-    }
+  // Shared by the agent and, when enable_cluster_metrics is true, the gateway's k8s_cluster pipeline (config.tf).
+  infra_processors = {
     // Drops pod/container metrics outside infra_namespaces. Node metrics carry no namespace and pass.
     "filter/namespaces" = {
       error_mode = "ignore"
@@ -38,12 +24,30 @@ locals {
         { key = "deployment.environment", value = local.env_name, action = "upsert" },
       ]
     }
+  }
+
+  agent_own_processors = merge(local.infra_processors, {
+    memory_limiter = {
+      check_interval         = "1s"
+      limit_percentage       = 65
+      spike_limit_percentage = 20
+    }
+    // Node-scoped (watches only this node's pods). Associates by pod UID, which kubeletstats sets on
+    // every pod/container resource; node resources have none and are left untouched.
+    k8sattributes = {
+      passthrough = false
+      filter      = { node_from_env_var = "K8S_NODE_NAME" }
+      extract     = { metadata = local.k8sattributes_metadata }
+      pod_association = [
+        { sources = [{ from = "resource_attribute", name = "k8s.pod.uid" }] },
+      ]
+    }
     batch = {
       send_batch_size     = 2000
       send_batch_max_size = 2000
       timeout             = "10s"
     }
-  }
+  })
 
   agent_pipeline_processors = ["memory_limiter", "k8sattributes", "filter/namespaces", "resource/infra", "batch"]
 

@@ -42,7 +42,8 @@ AMP workspace, and the AWS IAM are all omitted. An `extender` connection is requ
 - The operator is cluster-scoped (one per cluster). When multiple otel collector datastores target
   the same cluster, set `install_operator = false` on the additional instances.
 - `collector_image` is shared by the gateway and the infra metrics agent. It must include the AWS
-  exporters and the `kubeletstats` receiver; the contrib distribution (default) does, the ADOT image
+  exporters, the `kubeletstats` receiver, and the `k8s_cluster` receiver + `k8s_leader_elector`
+  extension; the contrib distribution (default) does, the ADOT image
   lacks `kubeletstats`, and the core image lacks the AWS exporters.
 
 ## Infra metrics (optional)
@@ -58,3 +59,23 @@ Set `enable_infra_metrics = true` to run an agent on every node (a second `OpenT
   `k8s.cluster.name` and `deployment.environment`.
 - Sizing: `agent_cpu`, `agent_memory`, `agent_memory_limit`, `agent_collection_interval`.
 - Not available on Fargate (no DaemonSets, no kubelet).
+
+## Cluster metrics (optional)
+
+Set `enable_cluster_metrics = true` to add the `k8s_cluster` receiver to the OTLP gateway. It watches
+the Kubernetes API (no kubelet, no DaemonSet) and emits cluster-level state the agent cannot see:
+
+- `k8s.container.restarts`, `k8s.container.ready`, `k8s.pod.phase`
+- `k8s.deployment.available`, `k8s.deployment.desired` (plus the matching daemonset / statefulset /
+  replicaset / job / cronjob / hpa gauges)
+- `k8s.container.cpu_limit`, `k8s.container.memory_limit` (and the `*_request` counterparts)
+- `k8s.node.condition_ready`, `k8s.node.condition_memory_pressure`, `k8s.node.condition_disk_pressure`,
+  `k8s.node.allocatable_cpu`, `k8s.node.allocatable_memory`
+
+Exported **only to the connected `extender`** (its `metrics*` pipelines), never to AMP or CloudWatch.
+An extender connection is required. Pod/container metrics are kept for `infra_namespaces` only; node,
+namespace, and deployment metrics are always kept. Metrics carry `k8s.cluster.name` and
+`deployment.environment`. The receiver runs on exactly one gateway replica at a time via the
+`k8s_leader_elector` extension (a Lease in the collector's namespace), so scaling `min_replicas` up
+never double-counts. `cluster_collection_interval` (default `60s`) sets the emit interval. Works on
+Fargate.

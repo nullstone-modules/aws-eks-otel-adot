@@ -60,5 +60,10 @@ resource "kubectl_manifest" "collector" {
       condition     = !local.extender_connected || local.extender_namespace == local.kubernetes_namespace
       error_message = "The `extender` connection must target the same cluster-namespace as this collector (its kubernetes_namespace must match)."
     }
+
+    precondition {
+      condition     = !var.enable_cluster_metrics || local.extender_connected
+      error_message = "enable_cluster_metrics exports cluster metrics only to the connected `extender`; wire an extender connection."
+    }
   }
 }
